@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'sha256-QKSD9q3sBuyQk+m9arbuhhgz9/71cul54OMZmrb/Q2A='; style-src 'unsafe-inline'"
+    />
+    <title>Final DPS Meta – Anmeldung</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0f1216;
+        color: #eef1f4;
+        font: 16px/1.5 system-ui, sans-serif;
+      }
+      main {
+        max-width: 460px;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 8px;
+      }
+      p {
+        color: #9aa6b2;
+        margin: 0;
+      }
+      .err {
+        color: #e5564b;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Final DPS Meta</h1>
+      <p id="msg">Anmeldung wird an die App übergeben …</p>
+    </main>
+    <script>
+      // Reicht den Bungie-OAuth-Code an die lokal laufende App weiter (nur 127.0.0.1).
+      // state hat das Format "<Port>.<Zufall>"; der Port gehört zum kurzlebigen Login-Server der App.
+      (function () {
+        var msg = document.getElementById('msg');
+        var q = new URLSearchParams(location.search);
+        var state = q.get('state') || '';
+        var m = /^(\d{4,5})\.[A-Za-z0-9_-]{16,128}$/.exec(state);
+        var port = m ? Number(m[1]) : 0;
+        if (history.replaceState) history.replaceState(null, '', location.pathname);
+        if (!m || port < 1024 || port > 65535) {
+          msg.className = 'err';
+          msg.textContent = 'Ungültige Anmeldeantwort. Bitte die Anmeldung in der App neu starten.';
+          return;
+        }
+        var target = new URL('http://127.0.0.1:' + port + '/callback');
+        ['code', 'state', 'error', 'error_description'].forEach(function (k) {
+          var v = q.get(k);
+          if (v !== null) target.searchParams.set(k, v);
+        });
+        location.replace(target.toString());
+      })();
+    </script>
+  </body>
+</html>
